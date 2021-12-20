@@ -19,6 +19,61 @@ async def derive_option_key_from_params(
 
     return authority_and_nonce
 
+async def find_open_orders_accounts_for_owner(program: Program, dex_program_id: PublicKey, serum_market_address: PublicKey):
+    instructions = [
+        b"open-orders",
+        str.encode(dex_program_id),
+        str.encode(serum_market_address),
+        str.encode(str(program.provider.wallet.public_key))
+    ]
+    results: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(instructions, program.program_id)
+    open_orders_address_key = results[0]
+    open_orders_bump = results[1]
+    print(results)
+
+    # program.provider.connection.get_program_accounts(dex_program_id, {})
+#   const accounts = await program.provider.connection.getProgramAccounts(
+#     dexProgramId,
+    return results
+#     const [openOrdersAddressKey, openOrdersBump] =
+#     await PublicKey.findProgramAddress(
+#       [
+#         textEncoder.encode("open-orders"),
+#         dexProgramId.toBuffer(),
+#         serumMarketAddress.toBuffer(),
+#         program.provider.wallet.publicKey.toBuffer(),
+#       ],
+#       program.programId
+#     );
+#   const filters = [
+#     {
+#       memcmp: {
+#         offset: OpenOrders.getLayout(dexProgramId).offsetOf("market"),
+#         bytes: serumMarketAddress.toBase58(),
+#       },
+#     },
+#     {
+#       memcmp: {
+#         offset: OpenOrders.getLayout(dexProgramId).offsetOf("owner"),
+#         bytes: openOrdersAddressKey.toBase58(),
+#       },
+#     },
+#     {
+#       dataSize: OpenOrders.getLayout(dexProgramId).span,
+#     },
+#   ];
+#   const accounts = await program.provider.connection.getProgramAccounts(
+#     dexProgramId,
+#     {
+#       filters,
+#     }
+#   );
+
+#   return accounts.map(({ pubkey, account }) =>
+#     OpenOrders.fromAccountInfo(pubkey, account, dexProgramId)
+#   );
+    # return None
+
 # def initialize_market():
 
 async def main():
@@ -34,12 +89,17 @@ async def main():
     program = Program(idl_obj, program_id, provider)
     
     # print(program.idl)  # swap
-    authority_and_nonce = await derive_option_key_from_params(
-        expiration=b"1630108799", quote_asset_mint=b"E6Z6zLzk8MWY3TY8E87mr88FhGowEPJTeMWzkqtL6qkF", 
-        program_id=program_id, underlying_asset_mint=b"C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6",
-        underlying_asset_per_contract=b"3500000", quote_asset_per_contract=b"1000000000")
-    # authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(insts, key)
-    print(authority_and_nonce)
+    # authority_and_nonce = await derive_option_key_from_params(
+    #     expiration=b"1630108799", quote_asset_mint=b"E6Z6zLzk8MWY3TY8E87mr88FhGowEPJTeMWzkqtL6qkF", 
+    #     program_id=program_id, underlying_asset_mint=b"C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6",
+    #     underlying_asset_per_contract=b"3500000", quote_asset_per_contract=b"1000000000")
+    # # authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(insts, key)
+    # print(authority_and_nonce)
+
+    dex_program_id = "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY"
+    serum_market_address = "2fc2ZLeDDs3RoijbdAMURwCe73J2R6MRLb47VbcbWFqz"
+    results = await find_open_orders_accounts_for_owner(program, dex_program_id, serum_market_address)
+    print("finished")
 
     await program.close()
 
