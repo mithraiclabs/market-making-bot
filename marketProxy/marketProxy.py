@@ -1,17 +1,6 @@
 from solana.rpc.api import Client
-from pyserum.market.market import Market
+from pyserum.market.async_market import Market
 from solana.publickey import PublicKey
-
-
-class marketProxy:
-    def __init__(self, market: Market) -> None:
-        self._market = market
-
-        @property
-        def market(self):
-            return self._market
-
-    _market: Market
 
 
 class marketProxyInstruction:
@@ -34,3 +23,44 @@ class marketProxyInstruction:
     _dexProgramId: PublicKey
 
     _market: Market
+
+
+class marketProxy:
+    def __init__(self, market: Market, instruction: marketProxyInstruction) -> None:
+        self._market = market
+        self._instruction = instruction
+
+        @property
+        def market(self) -> Market:
+            return self._market
+
+        @property
+        def instruction(self) -> marketProxyInstruction:
+            return self._instruction
+
+        @property
+        def dexProgramId(self) -> PublicKey:
+            return self._market.state.program_id()
+
+        @property
+        def proxyProgramId(self) -> PublicKey:
+            return self._instruction.proxyProgramId()
+
+    _market: Market
+
+
+class marketProxyBuilder:
+    def __init__(self) -> None:
+        pass
+
+    async def load(
+        connection,
+        market: PublicKey,
+        dexProgramId: PublicKey,
+        proxyProgramId: PublicKey,
+    ):
+        MARKET_CLIENT = await Market.load(connection, market, dexProgramId)
+        INSTRUCTION = marketProxyInstruction(
+            proxyProgramId, dexProgramId, MARKET_CLIENT
+        )
+        return marketProxy(MARKET_CLIENT, INSTRUCTION)
